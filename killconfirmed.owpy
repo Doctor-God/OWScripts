@@ -1,0 +1,95 @@
+%spawn_tag_effect(ep)
+    //Tags inimigas (amarelas)
+    create effect // parte superior
+        visible: all players(opposite team of(team of(ep)))
+        type: orb
+        color: yellow
+        position: <tag_pos@ep.x, tag_pos@ep.y + 0.250, tag_pos@ep.z>
+        radius: 0.2
+        reevaluation: position and radius
+    create effect // parte superior
+        visible: all players(opposite team of(team of(ep)))
+        type: orb
+        color: yellow
+        position: tag_pos@ep
+        radius: 0.2
+        reevaluation: position and radius
+
+    //Tags aliadas (vermelhas)
+      create effect // parte superior
+        visible: all players(team of(ep))
+        type: orb
+        color: red
+        position: <tag_pos@ep.x, tag_pos@ep.y + 0.250, tag_pos@ep.z>
+        radius: 0.2
+        reevaluation: position and radius
+    create effect // parte superior
+        visible: all players(team of(ep))
+        type: orb
+        color: red
+        position: tag_pos@ep
+        radius: 0.2
+        reevaluation: position and radius
+
+%pickup_tag(ep, other)
+    if(ep.team == other.team):
+        tag_pos@other = <10000, 10000, 10000> //reset tag
+        set ultimate charge(ep, ultimate charge percent(ep) + 4)
+        play effect
+            visible: all players 
+            type: explosion sound
+            color: white
+            radius: 75.0
+            position: ep
+    else:
+        tag_pos@other = <10000, 10000, 10000>
+        modify team score(ep.team, 1)
+        set ultimate charge(ep, ultimate charge percent(ep) + 7)
+        play effect
+            visible: all players 
+            type: buff explosion sound
+            color: white
+            radius: 75.0
+            position: ep
+
+
+Rule "Disable Normal Scoring"
+    Event
+        On Global
+    Conditions
+        //No Condition
+    Actions
+        Disable Built-in Game Mode Scoring
+
+
+Rule "Initialize Tag Position"
+    Event
+        On each player
+    Conditions
+        //No Condition
+    Actions
+        pvar tag_pos = vector(10000, 10000, 10000)
+        spawn_tag_effect(event player)
+
+
+
+Rule "Set Death Position"
+    Event
+        On Each Player
+    Conditions
+        Player Died    
+    Actions
+        tag_pos = <event player.pos.x, event player.pos.y + 0.6, event player.pos.z>
+
+Rule "Check Colision with Tag"
+    Event
+        On each player
+    Conditions
+        //No condition
+    Actions
+        gvar touch_distance = 10 //Ver como esta no original
+        for i in Everyone:
+            if(distance between(event player, tag_pos@i) <= 2):
+                pickup_tag(event player, i)
+        wait
+        loop
